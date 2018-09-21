@@ -24,7 +24,6 @@ do { \
 
 void avro_test_primitive_types();
 int avro_read_data_file();
-int avro_test_null_schema();
 int avro_test_boolean_schema();
 int avro_test_int_schema();
 int avro_test_long_schema();
@@ -41,7 +40,6 @@ int main()
 
 void avro_test_primitive_types()
 {
-	 avro_test_null_schema();
 	 avro_test_boolean_schema();
 	 avro_test_int_schema();
 	 avro_test_long_schema();
@@ -61,29 +59,6 @@ int avro_read_data_file()
 	printf("### hexdump output ###\n");
 	(void) system(cmd_hexdump);
 	return ret;
-}
-
-int avro_test_null_schema()
-{
-	avro_schema_t null_schema = avro_schema_null();
-	avro_value_t val;
-	avro_file_writer_t writer;
-	
-	remove(AVRO_DATA_FILE);
-
-	try(avro_generic_null_new(&val), "Error in create null");
-	try(avro_file_writer_create(AVRO_DATA_FILE,	null_schema, &writer),
-												"Error in create file writer");
-	try(avro_file_writer_append_value(writer, &val),
-							"Error in append val\n");
-	avro_file_writer_flush(writer);
-	avro_file_writer_close(writer);
-	
-	CHECK_TEST_RESULT();
-
-	avro_value_decref(&val);
-	avro_schema_decref(null_schema);
-	return 0;
 }
 
 int avro_test_boolean_schema()

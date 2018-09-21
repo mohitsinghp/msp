@@ -1,0 +1,13 @@
+{
+	"name": "com.test.test_simple_record",
+	"type": "record",
+	"fields": 
+		[
+			{"name":"test_bool", "type": "boolean"},
+			{"name":"test_null", "type": "null"},
+			{"name":"test_int", "type": "int"},
+			{"name":"test_float", "type": "float"},
+			{"name":"test_bytes", "type": "bytes"},
+			{"name":"test_string", "type": "string"}
+		]
+}
