@@ -1,30 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <avro.h>
+#include <avro_test.h>
 
-#define AVRO_DATA_FILE "data.avro"
-#define AVRO_FILE_CODEC "null"
-
-#define try(func, msg) \
-do { \
-	if (func) { \
-		fprintf(stderr, msg ":\n  %s\n", avro_strerror()); \
-			return EXIT_FAILURE; \
-	} \
-} while (0)
-
-#define CHECK_TEST_RESULT() \
-do { \
-	if (avro_read_data_file()) { \
-		fprintf(stderr, "Test: %s - FAILED\n", __FUNCTION__); \
-	} else { \
-		printf("Test: %s - PASSED\n", __FUNCTION__); \
-	} \
-} while (0)
 
 void avro_test_complex_types();
-int avro_read_data_file();
-char *avro_read_schema_json_file(const char *path);
 int avro_test_record_schema();
 int avro_test_enum_schema();
 int avro_test_fixed_schema();
@@ -48,53 +27,15 @@ void avro_test_complex_types()
 	 avro_test_map_schema();
 }
 
-int avro_read_data_file()
-{
-	char *cmd_avrocat = "avrocat ./"AVRO_DATA_FILE;
-	char *cmd_hexdump = "hexdump -C ./"AVRO_DATA_FILE;
-	int ret;
-	printf("### avrocat output ###\n");
-	ret = system(cmd_avrocat);
-	printf("### hexdump output ###\n");
-	(void) system(cmd_hexdump);
-	return ret;
-}
-
-char *avro_read_schema_json_file(const char *path)
-{
-#define SZ_64K (64*1024)
-	FILE *fp;
-	static char buf[SZ_64K];
-	int bytes; 
-
-	fp = fopen(path, "r");
-	if (fp == NULL) {
-		fprintf(stderr, "Error in fopen\n");
-		goto err;
-	}
-	bytes = fread(buf, sizeof(*buf), SZ_64K, fp);
-	if (bytes >= SZ_64K) {
-		fprintf(stderr, "Error: json schema size > 64KB\n");
-		fclose(fp);
-		goto err;
-	}
-	buf[bytes] = '\0';
-	return buf;
-err:
-	return NULL;
-#undef SZ_64K
-}
-
 int avro_test_record_schema()
 {
 	const char *path = "./schema/record_test_simple.json";
 	char *json;
 	avro_schema_t schema;
-	avro_value_iface_t *record_class;
+	avro_value_iface_t *class;
 	avro_value_t val;
 	avro_value_t field;
 	size_t field_cnt;
-	avro_file_writer_t writer;
 
 	json = avro_read_schema_json_file(path);
 	if (json == NULL) {
@@ -104,8 +45,8 @@ int avro_test_record_schema()
 
 	try(avro_schema_from_json_length(json, strlen(json), &schema),
 						"Error in getting schema from json");
-	record_class = avro_generic_class_from_schema(schema);
-	try(avro_generic_value_new(record_class, &val), 
+	class = avro_generic_class_from_schema(schema);
+	try(avro_generic_value_new(class, &val), 
 							"Error in getting record\n");
 	try(avro_value_get_size(&val, &field_cnt), "Error in getting field count");
 	if (field_cnt != 6) {
@@ -133,19 +74,13 @@ int avro_test_record_schema()
 	try(avro_value_get_by_index(&val, 5, &field, NULL), "cannot get field 5");
 	try(avro_value_set_string(&field, str), "cannot set field 5");
 
-	
-	try(avro_file_writer_create(AVRO_DATA_FILE, schema, &writer),
-											"Error in create file writer");
-	try(avro_file_writer_append_value(writer, &val),
-											"Error in append val\n");
-	avro_file_writer_flush(writer);
-	avro_file_writer_close(writer);
+	try(avro_write_data_to_file(&schema, &val), "cannot write data to file");	
 
 	CHECK_TEST_RESULT();
 
 	avro_value_decref(&val);
 	avro_value_decref(&field);
-	avro_value_iface_decref(record_class);
+	avro_value_iface_decref(class);
 	avro_schema_decref(schema);
 
 	return 0;
@@ -155,8 +90,49 @@ err:
 
 int avro_test_enum_schema()
 {
+	const char *path = "./schema/enum_test.json";
+	char *json;
+	avro_schema_t schema;
+	avro_file_writer_t writer;
+	avro_value_iface_t *class;
+	avro_value_t val;
+	int i;
+
+	json = avro_read_schema_json_file(path);
+	if (json == NULL) {
+		fprintf(stderr, "Error in avro_read_schema_json_file\n");
+		goto err;
+	}
+
+	try(avro_schema_from_json_length(json, strlen(json), &schema),
+						"Error in getting schema from json");
+	class = avro_generic_class_from_schema(schema);
+	try(avro_generic_value_new(class, &val), 
+							"Error in getting record\n");
+	
+	try(avro_file_writer_create(AVRO_DATA_FILE, schema, &writer),
+											"Error in create file writer");
+	
+	for(i = 0; i < 4; i++) {
+		try(avro_value_set_enum(&val, i), "cannot set enum value");
+		try(avro_file_writer_append_value(writer, &val),
+				"Error in append val\n");
+		avro_file_writer_flush(writer);
+		try(avro_value_reset(&val), "cannot reset value");
+	}
+	avro_file_writer_close(writer);
+
+	CHECK_TEST_RESULT();
+
+	avro_value_decref(&val);
+	avro_value_iface_decref(class);
+	avro_schema_decref(schema);
+
 	return 0;
+err:
+	return 1;
 }
+
 int avro_test_fixed_schema()
 {
 	return 0;

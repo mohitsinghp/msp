@@ -1,0 +1,11 @@
+{
+	"name": "com.test.test_enum",
+	"type": "enum",
+	"symbols": 
+		[
+			"ENUM_VAL_1",
+			"ENUM_VAL_2",
+			"ENUM_VAL_3",
+			"ENUM_VAL_4"
+		]
+}

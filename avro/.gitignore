@@ -1,0 +1,4 @@
+exec_*
+*.o
+.deps/
+*.avro
