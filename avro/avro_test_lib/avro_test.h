@@ -5,7 +5,7 @@
 
 int avro_read_data_from_file();
 int avro_write_data_to_file(avro_schema_t *schema, avro_value_t *val);
-char *avro_read_schema_json_file(const char *path);
+int avro_schema_from_json_file(const char *path, avro_schema_t *schema);
 
 #define try(func, msg) \
 do { \

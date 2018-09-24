@@ -1,5 +1,7 @@
 #include "avro_test.h"
 
+static char *avro_read_schema_json_file(const char *path);
+
 int avro_read_data_from_file()
 {
 	char *cmd_avrocat = "avrocat ./"AVRO_DATA_FILE;
@@ -26,7 +28,7 @@ int avro_write_data_to_file(avro_schema_t *schema, avro_value_t *val)
 	return EXIT_SUCCESS;
 }
 
-char *avro_read_schema_json_file(const char *path)
+static char *avro_read_schema_json_file(const char *path)
 {
 #define SZ_64K (64*1024)
 	FILE *fp;
@@ -51,3 +53,18 @@ err:
 #undef SZ_64K
 }
 
+int avro_schema_from_json_file(const char *path, avro_schema_t *schema)
+{
+	char *json;
+
+	json = avro_read_schema_json_file(path);
+	if (json == NULL) {
+		fprintf(stderr, "Error in avro_read_schema_json_file\n");
+		goto err;
+	}
+	try(avro_schema_from_json_length(json, strlen(json), schema),
+			"Error in getting schema from json");
+	return 0;
+err:
+	return 1;
+}
