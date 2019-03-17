@@ -1,0 +1,12 @@
+{
+  "summary": {
+    "title": "AVRO_LIB_THREAT_MODEL",
+    "owner": "Mohit Singh",
+    "description": "AVRO Lib is generic library to encode/decode and serailize data in AVRO format."
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [],
+    "reviewer": "Mohit Singh"
+  }
+}
